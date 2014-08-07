@@ -1,4 +1,4 @@
-package net.indiespot.script;
+package net.indiespot.script.eval;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

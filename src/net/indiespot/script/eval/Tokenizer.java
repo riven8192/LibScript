@@ -1,4 +1,4 @@
-package net.indiespot.script;
+package net.indiespot.script.eval;
 
 import java.util.ArrayList;
 import java.util.HashSet;

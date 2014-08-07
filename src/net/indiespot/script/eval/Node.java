@@ -1,10 +1,10 @@
-package net.indiespot.script;
+package net.indiespot.script.eval;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import net.indiespot.script.Tokenizer.ParserState;
-import net.indiespot.script.Tokenizer.Rules;
+import net.indiespot.script.eval.Tokenizer.ParserState;
+import net.indiespot.script.eval.Tokenizer.Rules;
 
 public class Node {
 	public int lineNumber;

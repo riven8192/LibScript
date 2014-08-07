@@ -1,4 +1,4 @@
-package net.indiespot.script;
+package net.indiespot.script.eval;
 
 public interface NodeVisitor {
 	public static final class SignalTreeModification extends RuntimeException {
