@@ -96,8 +96,10 @@ public class PostProcessor {
 				if(node.token.equals("return") || node.token.equals("yield")) {
 					if(node == node.lastSibling())
 						return; // already rewritten
-					if(node != node.firstSibling())
-						throw new IllegalStateException();
+					if(node != node.firstSibling() && //
+							!"{".equals(node.prev().token) && //
+							!Tokenizer.control_flow_tokens.contains(node.prev().token))
+						throw new IllegalStateException(node.prev().token);
 
 					// move return/yield to end of statement
 					Node p = node.detach();

@@ -272,7 +272,7 @@ public class Tokenizer {
 
 		StringBuilder pattern = new StringBuilder();
 		for(char c : "(){}.+-*/%&|^;,!=<>".toCharArray()) {
-			pattern.append("\\\\").append(c);
+			pattern.append("\\").append(c);
 		}
 
 		Matcher m = Pattern.compile("[" + pattern.toString() + "\\s]").matcher(input);

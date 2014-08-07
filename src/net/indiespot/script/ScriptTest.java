@@ -1,8 +1,11 @@
 package net.indiespot.script;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+
 public class ScriptTest {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		//String eval = "while(hazard.stuff.data( 0.5 + 5. - 5.5 & 3 + 4.4*abc(a) / 2 * 1 )) {\n\tyield;\n}aaa";
 		//String eval = "while(a) {\n\tu;\n}";
 		//String eval = "x( ( y ) )";
@@ -15,14 +18,27 @@ public class ScriptTest {
 		//String eval = "x = -2; y = -1; while(func(x, y+1*3, z)) { fan(1,2,3+4/2); }";
 		//String eval = "x = 4; y = x + x; if( x == 4 ) { y = 1; } else { y = 2; }";
 		//String eval = "x = 4; \n while(x<=7) { \n x=x+1;\n } \n";
-		String eval = "b = true; if(false) { return b; } x = 4; \n if(x==4) { \n while(x<=7) { \n x=x+1; yield x; yield b; \n } \n } \n else { \n x = 0; \n } ; return x+3*2 ; \n";
+		//String eval = "b = true; if(false) { return b; } x = 4; \n if(x==4) { \n while(x<=7) { \n x=x+1; yield x; yield b; \n } \n } \n else { \n x = 0; \n } ; return x+3*2 ; \n";
 		//String eval = "4*4*4; 3+3; 2; 1";
+
+		InputStream in = ScriptTest.class.getResourceAsStream("/script1.txt");
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buf = new byte[4 * 1024];
+		while (true) {
+			int got = in.read(buf);
+			if(got == -1)
+				break;
+			baos.write(buf, 0, got);
+		}
+		byte[] raw = baos.toByteArray();
+		String eval = new String(raw, "ASCII");
+
 		System.out.println(eval);
 		System.out.println();
 
 		Node script = PostProcessor.process(Tokenizer.parse(eval));
 
-		for(int i = 0; i < 100; i++) {
+		for(int i = 0; i < 1; i++) {
 			long t0 = System.nanoTime();
 			Stepper stepper = new Stepper(script);
 
@@ -36,7 +52,7 @@ public class ScriptTest {
 
 				case YIELDED:
 					Object yielded = stepper.getValue();
-					//System.out.println("yielded: " + yielded);
+					System.out.println("yielded: " + yielded);
 					break;
 				}
 
