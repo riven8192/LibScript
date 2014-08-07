@@ -12,8 +12,6 @@ public class Interpreter {
 	public static void step(ExecFrame frame) {
 		if(frame.subframe != null) {
 			step(frame.subframe);
-			if(frame.subframe.instructionPointer == -1)
-				frame.subframe = null;
 			return;
 		}
 
@@ -457,23 +455,27 @@ public class Interpreter {
 		// *RETURN
 		case Opcodes.RETURN: {
 			ip = -1;
+			frame.callsite.subframe = null;
 			break;
 		}
 		case Opcodes.IRETURN: {
 			int val = frame.popInt();
 			frame.callsite.pushInt(val);
+			frame.callsite.subframe = null;
 			ip = -1;
 			break;
 		}
 		case Opcodes.FRETURN: {
 			float val = frame.popFloat();
 			frame.callsite.pushFloat(val);
+			frame.callsite.subframe = null;
 			ip = -1;
 			break;
 		}
 		case Opcodes.ARETURN: {
 			Object val = frame.popRef();
 			frame.callsite.pushRef(val);
+			frame.callsite.subframe = null;
 			ip = -1;
 			break;
 		}

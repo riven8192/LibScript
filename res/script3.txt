@@ -1,0 +1,81 @@
+RAISE 1
+
+TRAP 4 CALL a
+TRAP 2 RAISE 3
+TRAP 3 RAISE 4
+
+
+
+BEGIN a
+	FUNCTION b
+		RAISE 123
+	END
+	
+	FUNCTION c
+		RAISE 456
+		
+		TRAP 456 CALL d
+	END
+	
+	FUNCTION d			
+		TRAP 789 RAISE 11111
+#		TRAP 789 CALL live
+		
+		FUNCTION e
+			RAISE 789
+		END
+		
+		CALL e
+	END
+	
+	CALL b
+	
+	TRAP 123 CALL c
+END
+
+
+TRAP 1 RAISE 2
+HALT
+
+
+
+
+
+
+
+
+
+
+
+FUNCTION live
+	FUNCTION drink
+		drinking()
+	END
+	
+	FUNCTION eat
+		eating()
+	END
+	
+	FUNCTION die
+		RAISE 40004
+	END
+	
+	FUNCTION h
+		HALT
+	END
+	
+	BEGIN
+		IF chance_of_death CALL die
+		
+		IF dead HALT
+		IF thirsty CALL drink
+		IF hungry CALL eat
+		
+		SLEEP 50ms
+		SLEEP 0.050s
+		REPEAT
+		
+		
+		TRAP 40004 CALL h
+	END
+END
