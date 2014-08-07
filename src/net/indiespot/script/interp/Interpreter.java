@@ -9,10 +9,16 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 public class Interpreter {
-	public static void step(ExecFrame frame) {
+	public static enum ExecState {
+		RUNNING, YIELDED, SLEEPING, SUSPENDED, TERMINATED;
+	}
+
+	public static ExecState step(ExecFrame frame) {
 		if(frame.subframe != null) {
-			step(frame.subframe);
-			return;
+			ExecState state = step(frame.subframe);
+			if(state == ExecState.TERMINATED)
+				state = ExecState.RUNNING;
+			return state;
 		}
 
 		int ip = frame.instructionPointer;
@@ -445,7 +451,36 @@ public class Interpreter {
 		}
 		// INVOKE
 		case Opcodes.INVOKESTATIC: {
-			frame.envMethod.envClass.env.invokeStatic(frame, (MethodInsnNode) node);
+			MethodInsnNode invoke = (MethodInsnNode) node;
+			if(invoke.owner.equals(Scheduler.class.getName().replace('.', '/'))) {
+				frame.instructionPointer++;
+				if(invoke.name.equals("yield")) {
+					Scheduler.signalYield(frame);
+					return ExecState.YIELDED;
+				}
+				if(invoke.name.equals("sleep")) {
+					Scheduler.signalSleep(frame, frame.popInt());
+					return ExecState.SLEEPING;
+				}
+				if(invoke.name.equals("suspend")) {
+					Scheduler.signalSuspend(frame);
+					return ExecState.SUSPENDED;
+				}
+				if(invoke.name.equals("echo")) {
+					if(frame.peekType() == ExecFrame.INT)
+						Scheduler.signalEcho(frame, Integer.valueOf(frame.popInt()));
+					else if(frame.peekType() == ExecFrame.FLOAT)
+						Scheduler.signalEcho(frame, Float.valueOf(frame.popFloat()));
+					else if(frame.peekType() == ExecFrame.REF)
+						Scheduler.signalEcho(frame, frame.popRef());
+					else
+						throw new IllegalStateException();
+					return ExecState.RUNNING;
+				}
+				throw new IllegalStateException();
+			}
+
+			frame.envMethod.envClass.env.invokeStatic(frame, invoke);
 			break;
 		}
 		case Opcodes.INVOKEVIRTUAL: {
@@ -454,30 +489,30 @@ public class Interpreter {
 		}
 		// *RETURN
 		case Opcodes.RETURN: {
-			ip = -1;
 			frame.callsite.subframe = null;
-			break;
+			frame.instructionPointer = -1;
+			return ExecState.TERMINATED;
 		}
 		case Opcodes.IRETURN: {
 			int val = frame.popInt();
 			frame.callsite.pushInt(val);
 			frame.callsite.subframe = null;
-			ip = -1;
-			break;
+			frame.instructionPointer = -1;
+			return ExecState.TERMINATED;
 		}
 		case Opcodes.FRETURN: {
 			float val = frame.popFloat();
 			frame.callsite.pushFloat(val);
 			frame.callsite.subframe = null;
-			ip = -1;
-			break;
+			frame.instructionPointer = -1;
+			return ExecState.TERMINATED;
 		}
 		case Opcodes.ARETURN: {
 			Object val = frame.popRef();
 			frame.callsite.pushRef(val);
 			frame.callsite.subframe = null;
-			ip = -1;
-			break;
+			frame.instructionPointer = -1;
+			return ExecState.TERMINATED;
 		}
 
 		case -1:
@@ -491,5 +526,7 @@ public class Interpreter {
 			frame.instructionPointer++;
 		else
 			frame.instructionPointer = ip;
+
+		return ExecState.RUNNING;
 	}
 }

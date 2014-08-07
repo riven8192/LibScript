@@ -2,20 +2,24 @@ package net.indiespot.script.interp;
 
 import java.util.Arrays;
 
-public class ExecFrame {
+import net.indiespot.script.interp.Interpreter.ExecState;
+
+public class ExecFrame implements Runnable {
 	ExecFrame callsite;
 	ExecFrame subframe;
 	EnvMethod envMethod;
 	int instructionPointer;
 	int stackPointer;
+	TerminationHandler terminationHandler;
 
 	static final int NONE = 0;
-	private static final int REF = 1;
-	private static final int INT = 2;
-	private static final int FLOAT = 3;
+	static final int REF = 1;
+	static final int INT = 2;
+	static final int FLOAT = 3;
 
-	public ExecFrame() {
+	public ExecFrame(TerminationHandler handler) {
 		this(null, null);
+		terminationHandler = handler;
 	}
 
 	public ExecFrame(ExecFrame callsite, EnvMethod envMethod) {
@@ -30,6 +34,24 @@ public class ExecFrame {
 		stackType = new int[maxStack];
 		stackData = new int[maxStack];
 		objLookup = new Object[2];
+	}
+
+	@Override
+	public void run() {
+		if(instructionPointer == -1)
+			throw new IllegalStateException();
+
+		final int executionsPerTick = 100;
+
+		ExecState lastState = ExecState.RUNNING;
+		for(int i = 0; i < executionsPerTick; i++)
+			if((lastState = Interpreter.step(this)) != ExecState.RUNNING)
+				break;
+
+		if(lastState == ExecState.RUNNING)
+			Scheduler.signalResume(this);
+		else if(lastState == ExecState.TERMINATED)
+			Scheduler.signalTerminated(callsite);
 	}
 
 	private final int[] localType;
@@ -53,6 +75,10 @@ public class ExecFrame {
 
 	private Object lookup(int ref) {
 		return (ref == -1) ? null : objLookup[ref];
+	}
+
+	int peekType() {
+		return stackType[stackPointer - 1];
 	}
 
 	// ref

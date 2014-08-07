@@ -21,6 +21,10 @@ public class EnvMethod {
 		Arrays.fill(labelOffsetCache, -1);
 	}
 
+	public ExecFrame prepare(TerminationHandler handler) {
+		return new ExecFrame(new ExecFrame(handler), this);
+	}
+
 	public ExecFrame call(ExecFrame callsite) {
 		return new ExecFrame(callsite, this);
 	}
